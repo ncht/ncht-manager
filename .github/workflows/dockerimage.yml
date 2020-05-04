@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: "docker.pkg.github.com/${{ github.repository }}/ncht-manager:latest"
 
     steps:
     - uses: actions/checkout@v2
@@ -17,5 +19,5 @@ jobs:
         username: $GITHUB_ACTOR
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ncht-manager:latest
-    - run: docker push docker.pkg.github.com/${{ github.repository }}/ncht-manager:latest
+      run: docker build . --file Dockerfile --tag $IMAGE_TAG
+    - run: docker push $IMAGE_TAG
