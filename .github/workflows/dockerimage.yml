@@ -16,7 +16,6 @@ jobs:
         login-server: docker.pkg.github.com
         username: $GITHUB_ACTOR
         password: ${{ secrets.GITHUB_TOKEN }}
-    - run: echo "${IMAGE_TAG}"
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag docker.pkg.github.com/${{ github.repository }}/ncht-manager:latest
     - run: docker push docker.pkg.github.com/${{ github.repository }}/ncht-manager:latest
