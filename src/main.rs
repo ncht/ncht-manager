@@ -1,6 +1,8 @@
 use dotenv::dotenv;
 use serenity::{
+    async_trait,
     framework::{standard::macros::*, StandardFramework},
+    http::Http,
     model::gateway::Ready,
     prelude::*,
     Result,
@@ -18,28 +20,31 @@ struct Channel;
 
 struct Handler;
 
+#[async_trait]
 impl EventHandler for Handler {
-    fn ready(&self, _ctx: Context, ready: Ready) {
+    async fn ready(&self, _ctx: Context, ready: Ready) {
         println!("{} is connected", ready.user.name);
     }
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     dotenv().ok();
 
     let token = env::var("DISCORD_TOKEN").expect("discord token");
 
-    let mut client = Client::new(token, Handler).expect("create client");
-
-    let app = client.cache_and_http.http.get_current_application_info()?;
-
+    let http = Http::new_with_token(&token);
+    let app = http.get_current_application_info().await?;
     let bot_id = app.id;
 
-    client.with_framework(
-        StandardFramework::new()
-            .configure(|c| c.allow_dm(false).on_mention(Some(bot_id)).prefix("!"))
-            .group(&CHANNEL_GROUP),
-    );
+    let framework = StandardFramework::new()
+        .configure(|c| c.allow_dm(false).on_mention(Some(bot_id)).prefix("!"))
+        .group(&CHANNEL_GROUP);
 
-    client.start()
+    let mut client = Client::builder(&token)
+        .event_handler(Handler)
+        .framework(framework)
+        .await?;
+
+    client.start().await
 }

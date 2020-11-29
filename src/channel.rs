@@ -1,4 +1,5 @@
 use crate::config;
+use anyhow::anyhow;
 use chrono::{Duration, Utc};
 use itertools::Itertools;
 use serde_json::{json, Map};
@@ -18,28 +19,28 @@ fn find_category<'a>(
     channels
         .iter()
         .find(|c| c.kind == ChannelType::Category && c.name == name)
-        .ok_or_else(|| CommandError(format!("`{}` category not found", name)))
+        .ok_or_else(|| anyhow!(format!("`{}` category not found", name)).into())
 }
 
-fn edit_channel_category(
+async fn edit_channel_category(
     ctx: &Context,
     channel_id: ChannelId,
     category_id: ChannelId,
 ) -> Result<(), CommandError> {
     let mut param = Map::new();
     param.insert("parent_id".to_owned(), json!(category_id.as_u64()));
-    ctx.http.edit_channel(channel_id.into(), &param)?;
+    ctx.http.edit_channel(channel_id.into(), &param).await?;
 
     Ok(())
 }
 
 #[command]
-pub fn archive(ctx: &mut Context, msg: &Message) -> CommandResult {
+pub async fn archive(ctx: &Context, msg: &Message) -> CommandResult {
     let guild_id = msg
         .guild_id
-        .ok_or_else(|| CommandError("no guild".to_owned()))?;
+        .ok_or_else(|| CommandError::from(anyhow!("no guild")))?;
 
-    let channels = ctx.http.get_channels(guild_id.into())?;
+    let channels = ctx.http.get_channels(guild_id.into()).await?;
 
     let active_category = find_category(&channels, &config::ACTIVE_CATEGORY)?;
     let archive_category = find_category(&channels, &config::ARCHIVE_CATEGORY)?;
@@ -68,7 +69,7 @@ pub fn archive(ctx: &mut Context, msg: &Message) -> CommandResult {
         .collect();
 
     if target_channles.is_empty() {
-        msg.reply(&ctx, "no target".to_owned())?;
+        msg.reply(&ctx, "no target".to_owned()).await?;
 
         return Ok(());
     }
@@ -79,21 +80,22 @@ pub fn archive(ctx: &mut Context, msg: &Message) -> CommandResult {
         .join(", ");
 
     for channel in target_channles {
-        edit_channel_category(ctx, channel.id, archive_category.id)?;
+        edit_channel_category(ctx, channel.id, archive_category.id).await?;
     }
 
-    msg.reply(&ctx, format!("archived channels: {}", ids))?;
+    msg.reply(&ctx, format!("archived channels: {}", ids))
+        .await?;
 
     Ok(())
 }
 
 #[command]
-pub fn restore(ctx: &mut Context, msg: &Message) -> CommandResult {
+pub async fn restore(ctx: &Context, msg: &Message) -> CommandResult {
     let guild_id = msg
         .guild_id
-        .ok_or_else(|| CommandError("no guild".to_owned()))?;
+        .ok_or_else(|| CommandError::from(anyhow!("no guild")))?;
 
-    let channels = ctx.http.get_channels(guild_id.into())?;
+    let channels = ctx.http.get_channels(guild_id.into()).await?;
     let active_category = find_category(&channels, &config::ACTIVE_CATEGORY)?;
     let archive_category = find_category(&channels, &config::ARCHIVE_CATEGORY)?;
 
@@ -102,10 +104,10 @@ pub fn restore(ctx: &mut Context, msg: &Message) -> CommandResult {
         .find(|c| c.id == msg.channel_id && c.category_id == Some(archive_category.id));
 
     if let Some(channel) = channel {
-        edit_channel_category(ctx, channel.id, active_category.id)?;
-        msg.reply(&ctx, format!("restored",))?;
+        edit_channel_category(ctx, channel.id, active_category.id).await?;
+        msg.reply(&ctx, format!("restored",)).await?;
     } else {
-        msg.reply(&ctx, "not archived channel")?;
+        msg.reply(&ctx, "not archived channel").await?;
     }
 
     Ok(())
