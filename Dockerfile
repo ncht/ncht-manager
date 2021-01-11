@@ -1,4 +1,4 @@
-FROM rust:1.48 as builder
+FROM rust:1.49.0 as builder
 
 WORKDIR /work
 COPY . .
