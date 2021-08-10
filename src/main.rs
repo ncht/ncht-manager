@@ -15,7 +15,7 @@ mod config;
 use channel::*;
 
 #[group]
-#[commands(archive, restore)]
+#[commands(archive, restore, role)]
 struct Channel;
 
 struct Handler;

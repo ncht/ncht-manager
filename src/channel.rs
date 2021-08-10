@@ -6,7 +6,7 @@ use serde_json::{json, Map};
 use serenity::{
     framework::standard::{macros::*, CommandError, CommandResult},
     model::{
-        channel::{ChannelType, GuildChannel, Message},
+        channel::{Channel, ChannelType, GuildChannel, Message},
         id::ChannelId,
     },
     prelude::*,
@@ -109,6 +109,58 @@ pub async fn restore(ctx: &Context, msg: &Message) -> CommandResult {
     } else {
         msg.reply(&ctx, "not archived channel").await?;
     }
+
+    Ok(())
+}
+
+#[command]
+pub async fn role(ctx: &Context, msg: &Message) -> CommandResult {
+    let guild_id = msg
+        .guild_id
+        .ok_or_else(|| CommandError::from(anyhow!("no guild")))?;
+
+    let roles = ctx.http.get_guild_roles(guild_id.into()).await?;
+    let human_role_ids: Vec<_> = roles
+        .iter()
+        .filter_map(|r| {
+            if r.name == "ひと" || r.name == "いちばんつよいひと" {
+                Some(r.id)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let mut humans: Vec<_> = ctx
+        .http
+        .get_guild_members(guild_id.into(), None, None)
+        .await?
+        .into_iter()
+        .filter(|m| {
+            m.roles
+                .iter()
+                .any(|r| human_role_ids.iter().any(|id| r == id))
+        })
+        .collect();
+
+    let channel_name = match ctx.http.get_channel(msg.channel_id.into()).await? {
+        Channel::Guild(c) => c.name,
+        _ => return Err(CommandError::from(anyhow!("guild channel is expected"))),
+    };
+
+    let new_role = {
+        let mut param = Map::new();
+        param.insert("name".to_owned(), json!(channel_name));
+        param.insert("mentionable".to_owned(), json!(true));
+        ctx.http.create_role(guild_id.into(), &param).await?
+    };
+
+    for human in humans.iter_mut() {
+        human.add_role(ctx, new_role.id).await?;
+    }
+
+    msg.reply(&ctx, format!("create role: {}", channel_name))
+        .await?;
 
     Ok(())
 }
