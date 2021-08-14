@@ -18,3 +18,5 @@ Discordの使われていないチャンネルを整理するbotです。
 - !restore
     - `ARCHIVE_CATEGORY`にあるチャンネルを`ACTIVE_CATEGORY`に戻す
     - `ARCHIVE_CATEGORY`にあるチャンネルでのみ有効
+- !role
+    - チャンネル名と同じロールを作成して全メンバーにロールを付与する
