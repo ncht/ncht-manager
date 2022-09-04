@@ -29,7 +29,9 @@ async fn edit_channel_category(
 ) -> Result<(), CommandError> {
     let mut param = Map::new();
     param.insert("parent_id".to_owned(), json!(category_id.as_u64()));
-    ctx.http.edit_channel(channel_id.into(), &param).await?;
+    ctx.http
+        .edit_channel(channel_id.into(), &param, None)
+        .await?;
 
     Ok(())
 }
@@ -52,7 +54,7 @@ pub async fn archive(ctx: &Context, msg: &Message) -> CommandResult {
                 return false;
             }
 
-            if channel.category_id != Some(active_category.id) {
+            if channel.parent_id != Some(active_category.id) {
                 return false;
             }
 
@@ -101,7 +103,7 @@ pub async fn restore(ctx: &Context, msg: &Message) -> CommandResult {
 
     let channel = channels
         .iter()
-        .find(|c| c.id == msg.channel_id && c.category_id == Some(archive_category.id));
+        .find(|c| c.id == msg.channel_id && c.parent_id == Some(archive_category.id));
 
     if let Some(channel) = channel {
         edit_channel_category(ctx, channel.id, active_category.id).await?;
@@ -152,7 +154,7 @@ pub async fn role(ctx: &Context, msg: &Message) -> CommandResult {
         let mut param = Map::new();
         param.insert("name".to_owned(), json!(channel_name));
         param.insert("mentionable".to_owned(), json!(true));
-        ctx.http.create_role(guild_id.into(), &param).await?
+        ctx.http.create_role(guild_id.into(), &param, None).await?
     };
 
     for human in humans.iter_mut() {
