@@ -35,7 +35,9 @@ async fn main() -> Result<()> {
 
     let http = Http::new(&token);
     let user = http.get_current_user().await?;
-    let intents = GatewayIntents::GUILD_MEMBERS | GatewayIntents::GUILD_MESSAGES;
+    let intents = GatewayIntents::GUILD_MEMBERS
+        | GatewayIntents::GUILD_MESSAGES
+        | GatewayIntents::MESSAGE_CONTENT;
 
     let framework = StandardFramework::new()
         .configure(|c| c.allow_dm(false).on_mention(Some(user.id)).prefix("!"))
