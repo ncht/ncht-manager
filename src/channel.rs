@@ -44,8 +44,8 @@ pub async fn archive(ctx: &Context, msg: &Message) -> CommandResult {
 
     let channels = ctx.http.get_channels(guild_id.into()).await?;
 
-    let active_category = find_category(&channels, &config::ACTIVE_CATEGORY)?;
-    let archive_category = find_category(&channels, &config::ARCHIVE_CATEGORY)?;
+    let active_category = find_category(&channels, &config::config().active_category)?;
+    let archive_category = find_category(&channels, &config::config().archive_category)?;
 
     let target_channles: Vec<_> = channels
         .iter()
@@ -61,7 +61,7 @@ pub async fn archive(ctx: &Context, msg: &Message) -> CommandResult {
             channel
                 .last_message_id
                 .map(|id| {
-                    let threshold = Utc::now() - Duration::days(*config::THRESHOLD_DAYS);
+                    let threshold = Utc::now() - Duration::days(config::config().threshold_days);
                     let target = id.created_at().with_timezone(&Utc);
 
                     threshold > target
@@ -98,8 +98,8 @@ pub async fn restore(ctx: &Context, msg: &Message) -> CommandResult {
         .ok_or_else(|| CommandError::from(anyhow!("no guild")))?;
 
     let channels = ctx.http.get_channels(guild_id.into()).await?;
-    let active_category = find_category(&channels, &config::ACTIVE_CATEGORY)?;
-    let archive_category = find_category(&channels, &config::ARCHIVE_CATEGORY)?;
+    let active_category = find_category(&channels, &config::config().active_category)?;
+    let archive_category = find_category(&channels, &config::config().archive_category)?;
 
     let channel = channels
         .iter()

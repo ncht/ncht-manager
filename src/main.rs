@@ -1,4 +1,4 @@
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use serenity::{
     async_trait,
     framework::{standard::macros::*, StandardFramework},
@@ -30,6 +30,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
+    config::init_config();
 
     let token = env::var("DISCORD_TOKEN").expect("discord token");
 
