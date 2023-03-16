@@ -10,13 +10,22 @@ use serenity::{
 use std::env;
 
 mod channel;
+#[cfg(feature = "chatgpt")]
+mod chat;
 mod config;
 
 use channel::*;
+#[cfg(feature = "chatgpt")]
+use chat::*;
 
 #[group]
 #[commands(archive, restore, role)]
 struct Channel;
+
+#[cfg(feature = "chatgpt")]
+#[group]
+#[commands(chat)]
+struct Chat;
 
 struct Handler;
 
@@ -41,8 +50,11 @@ async fn main() -> Result<()> {
         | GatewayIntents::MESSAGE_CONTENT;
 
     let framework = StandardFramework::new()
-        .configure(|c| c.allow_dm(false).on_mention(Some(user.id)).prefix("!"))
-        .group(&CHANNEL_GROUP);
+        .configure(|c| c.allow_dm(false).on_mention(Some(user.id)).prefix("!"));
+    let framework = framework.group(&CHANNEL_GROUP);
+
+    #[cfg(feature = "chatgpt")]
+    let framework = framework.group(&CHAT_GROUP);
 
     let mut client = Client::builder(&token, intents)
         .event_handler(Handler)

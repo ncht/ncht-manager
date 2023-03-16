@@ -3,7 +3,7 @@ FROM rust:1.68.0 as builder
 WORKDIR /work
 COPY . .
 
-RUN cargo build --release
+RUN cargo build --release --all-features
 
 FROM gcr.io/distroless/cc
 
