@@ -10,6 +10,7 @@ use serenity::{
 use std::env;
 #[cfg(feature = "chatgpt")]
 use std::sync::Arc;
+use tracing::info;
 
 mod channel;
 #[cfg(feature = "chatgpt")]
@@ -34,13 +35,14 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, _ctx: Context, ready: Ready) {
-        println!("{} is connected", ready.user.name);
+        info!("{} is connected", ready.user.name);
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
+    tracing_subscriber::fmt::init();
     config::init_config();
 
     let token = env::var("DISCORD_TOKEN").expect("discord token");

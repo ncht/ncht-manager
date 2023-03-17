@@ -13,6 +13,7 @@ use serenity::{
 
 use request::Request;
 use response::Response;
+use tracing::info;
 
 use crate::config;
 
@@ -38,10 +39,11 @@ pub struct Data {
 
 impl Data {
     pub fn add_history(&mut self, history: Message) {
+        info!("capacity: {}/{}", self.histories.len(), self.histsize);
         if self.histories.len() > self.histsize {
             self.histories.pop_front();
         }
-        self.histories.push_back(history)
+        self.histories.push_back(history);
     }
 
     pub fn histories(&self) -> Vec<Message> {
