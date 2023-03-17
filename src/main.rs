@@ -8,6 +8,8 @@ use serenity::{
     Result,
 };
 use std::env;
+#[cfg(feature = "chatgpt")]
+use std::sync::Arc;
 
 mod channel;
 #[cfg(feature = "chatgpt")]
@@ -24,7 +26,7 @@ struct Channel;
 
 #[cfg(feature = "chatgpt")]
 #[group]
-#[commands(chat)]
+#[commands(chat, histsize)]
 struct Chat;
 
 struct Handler;
@@ -60,6 +62,12 @@ async fn main() -> Result<()> {
         .event_handler(Handler)
         .framework(framework)
         .await?;
+
+    #[cfg(feature = "chatgpt")]
+    {
+        let mut data = client.data.write().await;
+        data.insert::<chat::Data>(Arc::new(RwLock::new(chat::Data::default())))
+    }
 
     client.start().await
 }
