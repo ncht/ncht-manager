@@ -39,11 +39,11 @@ pub struct Data {
 
 impl Data {
     pub fn add_history(&mut self, history: Message) {
-        info!("capacity: {}/{}", self.histories.len(), self.histsize);
-        if self.histories.len() > self.histsize {
+        while self.histories.len() >= self.histsize {
             self.histories.pop_front();
         }
         self.histories.push_back(history);
+        info!("capacity: {}/{}", self.histories.len(), self.histsize);
     }
 
     pub fn histories(&self) -> Vec<Message> {
