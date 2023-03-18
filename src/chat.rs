@@ -95,11 +95,13 @@ pub async fn chat_api(
     Ok((message, res.choices[0].message.clone()))
 }
 
-#[command]
-pub async fn chat(ctx: &Context, msg: &DiscordMessage) -> CommandResult {
-    let cmd: Vec<_> = msg.content.split_ascii_whitespace().collect();
-    let message = cmd.get(1).ok_or_else(|| anyhow!("invalid parameter"))?;
-
+pub async fn chat_with_role(
+    ctx: &Context,
+    msg: &DiscordMessage,
+    prefix: &str,
+    role: Role,
+) -> CommandResult {
+    let message = msg.content.strip_prefix(prefix).unwrap();
     let histories = {
         let data_read = ctx.data.read().await;
         let data_lock = data_read
@@ -109,13 +111,7 @@ pub async fn chat(ctx: &Context, msg: &DiscordMessage) -> CommandResult {
         data.histories()
     };
 
-    let (req, res) = chat_api(
-        &histories,
-        Role::User,
-        message,
-        &config::config().chatgpt_token,
-    )
-    .await?;
+    let (req, res) = chat_api(&histories, role, message, &config::config().chatgpt_token).await?;
 
     msg.reply(ctx, &res.content).await?;
 
@@ -130,6 +126,16 @@ pub async fn chat(ctx: &Context, msg: &DiscordMessage) -> CommandResult {
     }
 
     Ok(())
+}
+
+#[command]
+pub async fn chat(ctx: &Context, msg: &DiscordMessage) -> CommandResult {
+    chat_with_role(ctx, msg, "!chat ", Role::User).await
+}
+
+#[command]
+pub async fn chat_system(ctx: &Context, msg: &DiscordMessage) -> CommandResult {
+    chat_with_role(ctx, msg, "!chat_system ", Role::System).await
 }
 
 #[command]

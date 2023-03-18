@@ -27,7 +27,7 @@ struct Channel;
 
 #[cfg(feature = "chatgpt")]
 #[group]
-#[commands(chat, histsize)]
+#[commands(chat, chat_system, histsize)]
 struct Chat;
 
 struct Handler;
