@@ -13,7 +13,7 @@ use serenity::{
 
 use request::Request;
 use response::Response;
-use tracing::info;
+use tracing::{info, instrument};
 
 use crate::config;
 
@@ -66,6 +66,7 @@ impl TypeMapKey for Data {
 
 const ENDPOINT: &str = "https://api.openai.com/v1/chat/completions";
 
+#[instrument(skip(token, histories))]
 pub async fn chat_api(
     histories: &[Message],
     role: Role,

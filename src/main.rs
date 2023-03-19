@@ -42,7 +42,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt().with_ansi(false).init();
     config::init_config();
 
     let token = env::var("DISCORD_TOKEN").expect("discord token");
