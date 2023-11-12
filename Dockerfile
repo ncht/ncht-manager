@@ -5,7 +5,7 @@ COPY . .
 
 RUN cargo build --release --all-features
 
-FROM gcr.io/distroless/cc
+FROM gcr.io/distroless/cc-debian12
 
 WORKDIR /app
 
