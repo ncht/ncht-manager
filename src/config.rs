@@ -1,4 +1,5 @@
-use std::env;
+use anyhow::Context as _;
+use shuttle_secrets::SecretStore;
 
 #[derive(Debug)]
 pub struct Config {
@@ -8,15 +9,22 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_env() -> Self {
-        let threshold_days: i64 = env::var("THRESHOLD_DAYS").unwrap().parse().unwrap();
-        let active_category: String = env::var("ACTIVE_CATEGORY").unwrap();
-        let archive_category: String = env::var("ARCHIVE_CATEGORY").unwrap();
+    pub fn from_secret_store(secret_store: &SecretStore) -> anyhow::Result<Self> {
+        let threshold_days: i64 = secret_store
+            .get("THRESHOLD_DAYS")
+            .context("THRESHOLD_DAYS")?
+            .parse()?;
+        let active_category = secret_store
+            .get("ACTIVE_CATEGORY")
+            .context("ACTIVE_CATEGORY")?;
+        let archive_category = secret_store
+            .get("ARCHIVE_CATEGORY")
+            .context("ARCHIVE_CATEGORY")?;
 
-        Self {
+        Ok(Self {
             threshold_days,
             active_category,
             archive_category,
-        }
+        })
     }
 }

@@ -1,7 +1,7 @@
-use std::env;
-
-use dotenvy::dotenv;
+use anyhow::Context as _;
 use poise::serenity_prelude::{self as serenity};
+use shuttle_poise::ShuttlePoise;
+use shuttle_secrets::SecretStore;
 
 mod channel;
 mod config;
@@ -12,19 +12,18 @@ pub struct AppContext {
 
 type Context<'a> = poise::Context<'a, AppContext, anyhow::Error>;
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    dotenv().ok();
-    tracing_subscriber::fmt().with_ansi(false).init();
-
-    let config = config::Config::from_env();
+#[shuttle_runtime::main]
+async fn main(
+    #[shuttle_secrets::Secrets] secret_store: SecretStore,
+) -> ShuttlePoise<AppContext, anyhow::Error> {
+    let config = config::Config::from_secret_store(&secret_store)?;
     let app_context = AppContext { config };
-    let token = env::var("DISCORD_TOKEN").expect("discord token");
+    let token = secret_store.get("DISCORD_TOKEN").context("DISCORD_TOKEN")?;
 
     let intents =
         serenity::GatewayIntents::GUILD_MEMBERS | serenity::GatewayIntents::GUILD_MESSAGES;
 
-    let framework: poise::FrameworkBuilder<AppContext, anyhow::Error> = poise::Framework::builder()
+    let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![channel::role(), channel::archive()],
             ..Default::default()
@@ -38,7 +37,10 @@ async fn main() -> anyhow::Result<()> {
                     .await?;
                 Ok(app_context)
             })
-        });
+        })
+        .build()
+        .await
+        .map_err(shuttle_runtime::CustomError::new)?;
 
-    Ok(framework.run().await?)
+    Ok(framework.into())
 }
