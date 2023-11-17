@@ -1,0 +1,20 @@
+name: depoy
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: shuttle-hq/deploy-action@main
+        with:
+          deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
+          secrets: |
+            DISCORD_TOKEN = '${{ secrets.DISCORD_TOKEN }}'
+            ACTIVE_CATEGORY = '${{ secrets.ACTIVE_CATEGORY }}'
+            ARCHIVE_CATEGORY = '${{ secrets.ARCHIVE_CATEGORY }}'
+            THRESHOLD_DAYS = '${{ secrets.THRESHOLD_DAYS }}'
