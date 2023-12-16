@@ -2,6 +2,14 @@ version: 2
 
 updates:
   - package-ecosystem: "cargo"
+    groups:
+      shuttle:
+        patterns:
+          - "shuttle-*"
+        update-types:
+          - "patch"
+          - "minor"
+          - "major"
     directory: "/"
     schedule:
       interval: "weekly"
