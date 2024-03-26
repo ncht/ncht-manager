@@ -20,10 +20,8 @@ async fn edit_channel_category(
     category_id: serenity::ChannelId,
 ) -> anyhow::Result<()> {
     let mut param = Map::new();
-    param.insert("parent_id".to_owned(), json!(category_id.as_u64()));
-    ctx.http()
-        .edit_channel(channel_id.into(), &param, None)
-        .await?;
+    param.insert("parent_id".to_owned(), json!(category_id));
+    ctx.http().edit_channel(channel_id, &param, None).await?;
 
     Ok(())
 }
@@ -33,10 +31,13 @@ pub async fn archive(ctx: super::Context<'_>) -> anyhow::Result<()> {
     let config = &ctx.data().config;
     let guild_id = ctx.guild_id().ok_or_else(|| anyhow!("no guild"))?;
 
-    let channels = ctx.http().get_channels(guild_id.into()).await?;
+    let channels = ctx.http().get_channels(guild_id).await?;
 
     let active_category = find_category(&channels, &config.active_category)?;
     let archive_category = find_category(&channels, &config.archive_category)?;
+
+    let threshold_days = Duration::try_days(config.threshold_days)
+        .ok_or_else(|| anyhow!("invalid threshold days"))?;
 
     let target_channles: Vec<_> = channels
         .iter()
@@ -52,7 +53,7 @@ pub async fn archive(ctx: super::Context<'_>) -> anyhow::Result<()> {
             channel
                 .last_message_id
                 .map(|id| {
-                    let threshold = Utc::now() - Duration::days(config.threshold_days);
+                    let threshold = Utc::now() - threshold_days;
                     let target = id.created_at().with_timezone(&Utc);
 
                     threshold > target
@@ -99,7 +100,7 @@ pub async fn role(ctx: super::Context<'_>) -> anyhow::Result<()> {
     let reply = reply.into_message().await?;
 
     tokio::spawn(async move {
-        let roles = client.get_guild_roles(guild_id.into()).await?;
+        let roles = client.get_guild_roles(guild_id).await?;
         let human_role_ids: Vec<_> = roles
             .iter()
             .filter_map(|r| {
@@ -112,7 +113,7 @@ pub async fn role(ctx: super::Context<'_>) -> anyhow::Result<()> {
             .collect();
 
         let mut humans: Vec<_> = client
-            .get_guild_members(guild_id.into(), None, None)
+            .get_guild_members(guild_id, None, None)
             .await?
             .into_iter()
             .filter(|m| {
@@ -126,7 +127,7 @@ pub async fn role(ctx: super::Context<'_>) -> anyhow::Result<()> {
             let mut param = Map::new();
             param.insert("name".to_owned(), json!(channel_name));
             param.insert("mentionable".to_owned(), json!(true));
-            client.create_role(guild_id.into(), &param, None).await?
+            client.create_role(guild_id, &param, None).await?
         };
 
         for human in humans.iter_mut() {

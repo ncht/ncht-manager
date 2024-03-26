@@ -1,7 +1,7 @@
 use anyhow::Context as _;
-use poise::serenity_prelude::{self as serenity};
-use shuttle_poise::ShuttlePoise;
+use poise::serenity_prelude::{self as serenity, ClientBuilder};
 use shuttle_secrets::SecretStore;
+use shuttle_serenity::ShuttleSerenity;
 
 mod channel;
 mod config;
@@ -13,9 +13,7 @@ pub struct AppContext {
 type Context<'a> = poise::Context<'a, AppContext, anyhow::Error>;
 
 #[shuttle_runtime::main]
-async fn main(
-    #[shuttle_secrets::Secrets] secret_store: SecretStore,
-) -> ShuttlePoise<AppContext, anyhow::Error> {
+async fn main(#[shuttle_runtime::Secrets] secret_store: SecretStore) -> ShuttleSerenity {
     let config = config::Config::from_secret_store(&secret_store)?;
     let app_context = AppContext { config };
     let token = secret_store.get("DISCORD_TOKEN").context("DISCORD_TOKEN")?;
@@ -28,8 +26,6 @@ async fn main(
             commands: vec![channel::role(), channel::archive()],
             ..Default::default()
         })
-        .token(token)
-        .intents(intents)
         .setup(|ctx, ready, framework| {
             Box::pin(async move {
                 let guild_id = ready.guilds[0].id;
@@ -38,9 +34,12 @@ async fn main(
                 Ok(app_context)
             })
         })
-        .build()
+        .build();
+
+    let client = ClientBuilder::new(token, intents)
+        .framework(framework)
         .await
         .map_err(shuttle_runtime::CustomError::new)?;
 
-    Ok(framework.into())
+    Ok(client.into())
 }
