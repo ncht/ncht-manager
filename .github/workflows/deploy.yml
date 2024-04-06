@@ -18,3 +18,4 @@ jobs:
             ACTIVE_CATEGORY = '${{ secrets.ACTIVE_CATEGORY }}'
             ARCHIVE_CATEGORY = '${{ secrets.ARCHIVE_CATEGORY }}'
             THRESHOLD_DAYS = '${{ secrets.THRESHOLD_DAYS }}'
+            CERTIFIED_MEMBER_ROLES = '${{ secrets.CERTIFIED_MEMBER_ROLES }}'

@@ -85,6 +85,8 @@ pub async fn archive(ctx: super::Context<'_>) -> anyhow::Result<()> {
 
 #[poise::command(prefix_command, slash_command)]
 pub async fn role(ctx: super::Context<'_>) -> anyhow::Result<()> {
+    let config = &ctx.data().config;
+    let certified_member_roles = config.certified_member_roles.clone();
     let guild_id = ctx.guild_id().ok_or_else(|| anyhow!("no guild"))?;
 
     let channel_name = match ctx.channel_id().to_channel(&ctx).await? {
@@ -104,7 +106,7 @@ pub async fn role(ctx: super::Context<'_>) -> anyhow::Result<()> {
         let human_role_ids: Vec<_> = roles
             .iter()
             .filter_map(|r| {
-                if r.name == "ひと" || r.name == "いちばんつよいひと" {
+                if certified_member_roles.contains(&r.name) {
                     Some(r.id)
                 } else {
                     None

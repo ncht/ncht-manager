@@ -6,6 +6,7 @@ pub struct Config {
     pub threshold_days: i64,
     pub active_category: String,
     pub archive_category: String,
+    pub certified_member_roles: Vec<String>,
 }
 
 impl Config {
@@ -20,11 +21,18 @@ impl Config {
         let archive_category = secret_store
             .get("ARCHIVE_CATEGORY")
             .context("ARCHIVE_CATEGORY")?;
+        let certified_member_roles = secret_store
+            .get("CERTIFIED_MEMBER_ROLES")
+            .context("CERTIFIED_MEMBER_ROLES")?
+            .split(",")
+            .map(|s| s.trim().to_owned())
+            .collect();
 
         Ok(Self {
             threshold_days,
             active_category,
             archive_category,
+            certified_member_roles,
         })
     }
 }
